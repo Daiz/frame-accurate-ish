@@ -8,7 +8,7 @@ Unfortunate, `video.currentTime` is not accurate for this purpose - a simple cal
 
 The purpose of this repository is to research ways to improve frame accuracy for browsers today. 100% accuracy is unlikely to be possible in any of them at the time of writing, but various per-browser tricks can at least improve the situation somewhat.
 
-[*Check the browser test case here.*](https://daiz.github.io/video-fish/)
+[*Check the browser test case here.*](https://daiz.github.io/frame-accurate-ish/)
 
 Here's how things look today:
 
