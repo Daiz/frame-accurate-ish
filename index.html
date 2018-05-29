@@ -72,7 +72,7 @@
     v.addEventListener("canplay", e => {
       if (drift == null) {
         drift = v.currentTime;
-        console.log(`video time drift (chrome): ${drift}`);
+        console.log(`video time drift: ${drift}`);
       }
     });
 
@@ -117,8 +117,7 @@
     }
 
     v.addEventListener("seeked", e => {
-      let tdrift = paintCount === "webkitDecodedFrameCount" ? drift : 0;
-      const time = v.currentTime - tdrift;
+      const time = v.currentTime - drift;
       const frame = Math.floor(time / FRAME);
       currentFrame = frame;
       nextFrame = frame + 1;
@@ -130,8 +129,7 @@
     });
 
     function loop() {
-      let tdrift = paintCount === "webkitDecodedFrameCount" ? drift : 0;
-      const time = v.currentTime - tdrift;
+      const time = v.currentTime - drift;
       t.textContent = tc(time);
       const frame = Math.round(time / FRAME);
       if (paintCount) {
