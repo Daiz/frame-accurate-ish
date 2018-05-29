@@ -1,0 +1,169 @@
+<!doctype html>
+<html>
+
+<head>
+  <style>
+    div {
+      width: 1280px;
+      height: 60px;
+      font-size: 53.5px;
+      padding: 0 8px;
+      font-family: Arial;
+      font-weight: bold;
+      background: white;
+    }
+  </style>
+</head>
+
+<body style="background: red;">
+  <div>
+    <span id="frame">00000</span>
+    <span id="timecode">00:00:00.000</span>
+    <span id="curtime">00:00:00.000</span>
+    <span id="accuracy">00000</span>
+  </div>
+  <video src="time.mp4" width="1280" height="720" controls></video>
+  <script>
+    const d = document;
+    const b = d.body;
+    const w = window;
+    const v = d.querySelector("video");
+    const f = d.querySelector("#frame");
+    const c = d.querySelector("#timecode");
+    const t = d.querySelector("#curtime");
+    const a = d.querySelector("#accuracy");
+
+    const colors = [
+      "#FF0000",
+      "#00FF00",
+      "#0000FF",
+      "#FFFF00",
+      "#FF00FF",
+      "#00FFFF"
+    ]
+
+    v.playbackRate = 0.5;
+    let drift = null;
+    let tu = 0;
+
+    const MINUTE = 60;
+    const HOUR = 60 * 60;
+    const FPS = 24000 / 1001;
+    const FRAME = 1 / FPS;
+
+    function zpad(str, num = 2, pad = "0") {
+      str = "" + str;
+      while (str.length < num) {
+        str = pad + str;
+      }
+      return str;
+    }
+
+    function tc(seconds) {
+      const ss = ~~seconds % MINUTE;
+      const ms = ~~((seconds - ~~seconds) * 1000);
+      const mm = ~~((seconds % HOUR) / MINUTE);
+      const hh = ~~(seconds / HOUR);
+
+      return `${zpad(hh)}:${zpad(mm)}:${zpad(ss)}:${zpad(ms, 3)}`;
+    }
+
+    v.addEventListener("canplay", e => {
+      if (drift == null) {
+        drift = v.currentTime;
+        console.log(`video time drift (chrome): ${drift}`);
+      }
+    });
+
+    d.addEventListener("keydown", e => {
+      // console.log(e.keyCode);
+      if (e.keyCode === 32) {
+        e.preventDefault();
+        if (v.paused) {
+          v.play();
+        } else {
+          v.pause();
+        }
+      } else if (e.keyCode === 49) {
+        v.playbackRate = 1.0;
+      } else if (e.keyCode === 50) {
+        v.playbackRate = 0.5;
+      } else if (e.keyCode === 51) {
+        v.playbackRate = 0.25;
+      }
+    });
+
+    let paintCount = "";
+    let droppedCount = "";
+    if (v.mozPaintedFrames !== undefined) {
+      paintCount = "mozPaintedFrames";
+    }
+    if (v.webkitDecodedFrameCount !== undefined) {
+      paintCount = "webkitDecodedFrameCount";
+      droppedCount = "webkitDroppedFrameCount";
+    }
+
+    let currentFrame = 0;
+    let nextFrame = 1;
+    let nextFrameTime = nextFrame * FRAME;
+    let lastPaintCount = 0;
+    const FRAME_WINDOW_LOWER = FRAME * 0.95;
+    const FRAME_WINDOW_UPPER = FRAME * 0.25;
+
+    function within(value, target, window) {
+      const half = window / 2;
+      return value >= target - half && value <= target + half;
+    }
+
+    v.addEventListener("seeked", e => {
+      let tdrift = paintCount === "webkitDecodedFrameCount" ? drift : 0;
+      const time = v.currentTime - tdrift;
+      const frame = Math.floor(time / FRAME);
+      currentFrame = frame;
+      nextFrame = frame + 1;
+      nextFrameTime = nextFrame * FRAME;
+      if (paintCount) {
+        lastPaintCount = v[paintCount];
+      }
+      console.log("seeked");
+    });
+
+    function loop() {
+      let tdrift = paintCount === "webkitDecodedFrameCount" ? drift : 0;
+      const time = v.currentTime - tdrift;
+      t.textContent = tc(time);
+      const frame = Math.round(time / FRAME);
+      if (paintCount) {
+        const currentPaintCount = v[paintCount];
+        a.textContent = zpad(currentPaintCount, 5);
+        const diffPaintCount = currentPaintCount - lastPaintCount;
+        const check = time >= nextFrameTime - FRAME_WINDOW_LOWER && time <= nextFrameTime + FRAME_WINDOW_UPPER;
+        if (check && diffPaintCount > 0) {
+          currentFrame = nextFrame++;
+          nextFrameTime = nextFrame * FRAME;
+          console.log(`should be accurate frame change`)
+        } else if (time >= nextFrameTime && currentFrame < nextFrame) {
+          currentFrame = frame;
+          nextFrame = currentFrame + 1;
+          nextFrameTime = nextFrame * FRAME;
+          console.log(`[${tc(time)}] possibly a dropped frame`);
+          if (droppedCount) {
+            console.log("dropped frames:", v[droppedCount]);
+          }
+        }
+        lastPaintCount = currentPaintCount;
+      } else {
+        currentFrame = frame;
+      }
+      const timecode = currentFrame * FRAME;
+      f.textContent = zpad(currentFrame, 5);
+      c.textContent = tc(timecode);
+      b.style.backgroundColor = colors[Math.floor(currentFrame / 48) % 6];
+
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  </script>
+</body>
+
+</html>
