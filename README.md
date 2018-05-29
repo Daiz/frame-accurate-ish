@@ -10,7 +10,12 @@ The purpose of this repository is to research ways to improve frame accuracy for
 
 ### [Check the browser test case here.](https://daiz.github.io/frame-accurate-ish/)
 
-Here's how things look today:
+- Press Space to play/pause video.
+- Press 1/2/3 to set playback speed to 1x/0.5x/0.25x.
+- With perfect frame accuracy the frame numbers burned into the video as well as the color should always be in sync with the elements outside the video.
+- Slight color differences in video / page background actually touches on another issue - browsers also tend to have issues with video color accuracy. This subject is outside the scope of this repository, [but I have test cases available for that elsewhere.](https://daiz.github.io/yuv-to-rgb-in-html5-video/)
+
+Now, here's how things look today:
 
 ### General observations
 
@@ -36,7 +41,11 @@ Here's how things look today:
 
 ### Safari (macOS)
 
-I don't have a Mac so I can't test this one: help accepted.
+I don't have a Mac so I can't test this one. Help accepted.
+
+### Browsers on macOS & Linux in general
+
+I would hope that the non-standard APIs in various browsers act consistently across various operating systems, but without being able to actually test this myself I can't say for sure. Help accepted.
 
 ### Safari (iOS)
 
